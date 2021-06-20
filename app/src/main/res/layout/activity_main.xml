@@ -6,12 +6,48 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.example.myhorizscrollview.MyHScrolllView
+    <com.example.myhorizscrollview.progressbar.PodcastProgressBar
+        android:id="@+id/ppb"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="80dp"
+        android:background="#6666"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:text="Next"
+        app:layout_constraintLeft_toRightOf="@+id/add"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="Play"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/add" />
+
+    <Button
+        android:id="@+id/pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pause"
+        app:layout_constraintLeft_toRightOf="@id/play"
+        app:layout_constraintTop_toTopOf="@id/play" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
