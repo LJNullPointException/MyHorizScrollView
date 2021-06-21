@@ -1,5 +1,6 @@
 package com.example.myhorizscrollview.progressbar
 
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,15 +12,12 @@ import android.os.Message
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
-import android.view.View
+import android.view.animation.DecelerateInterpolator
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.LiveData
+import androidx.core.animation.addListener
 import androidx.lifecycle.MutableLiveData
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-
-import kotlin.math.abs
-import kotlin.jvm.JvmName as JvmName1
 
 
 class ScrollViewItem : androidx.appcompat.widget.AppCompatTextView, UpdateProgressBarInterface,
@@ -220,41 +218,74 @@ class ScrollViewItem : androidx.appcompat.widget.AppCompatTextView, UpdateProgre
         initAnimal(time)
     }
 
+    val playingAnimal = ValueAnimator.ofFloat(0f, 1000f)
     fun initAnimal(time: Int) {
         var t = time - 1000
-        val animal = ValueAnimator.ofFloat(0f, 1000f)
-        animal.duration = 1000
-        animal.addUpdateListener {
-//            Log.e("qunima", "$t ===${it.currentPlayTime}----+${datas[0].mFraction}")
 
-            currentPlayPosition =
-                headPosition + ((t + it.currentPlayTime) * datas[datasCurrentIndex].mFraction);
+        playingAnimal.duration = 1000
+        playingAnimal.addUpdateListener {
             if (!isTouchDown) {
+                currentPlayPosition =
+                    headPosition + ((t + it.currentPlayTime) * datas[datasCurrentIndex].mFraction);
                 scrollView.smoothScrollTo(currentPlayPosition.toInt(), 0)
+                Log.e(
+                    "aaa",
+                    "$currentPlayPosition ===${headPosition + datas[datasCurrentIndex].gaps * gap}"
+                )
             }
-            Log.e(
-                "qunima",
-                "$currentPlayPosition ===${headPosition + datas[datasCurrentIndex].gaps * gap}"
-            )
+
             if (currentPlayPosition >= headPosition + datas[datasCurrentIndex].gaps * gap) {
                 //当前播放完毕，下一首
-
-                headPosition = currentPlayPosition
                 Log.e("aaa", "xiayishou $headPosition")
-                datasCurrentIndex++
+                scroll2Next(
+                    headPosition.toInt() + (datas[datasCurrentIndex].gaps * gap).toInt(), 0,
+                    0
+                )
             }
         }
-        animal.start()
+        playingAnimal.start()
     }
 
     override fun updateNext() {
-        scrollView.smoothScrollTo(
-            (headPosition + (datas[datasCurrentIndex].gaps * gap)).toInt(),
-            0
-        );
-        headPosition += (datas[datasCurrentIndex].gaps * gap)
-        _isNext.value = true
-        datasCurrentIndex++
+        scroll2Next(
+            currentPlayPosition.toInt(), ((datas[datasCurrentIndex].gaps * gap)).toInt(), 0
+        )
+
+    }
+
+
+    private fun scroll2Next(startX: Int, distanceX: Int, i: Int) {
+        val scrollNextAnimal = ObjectAnimator.ofFloat(0f, 1000f)
+        scrollNextAnimal.duration = 500
+        scrollNextAnimal.interpolator = DecelerateInterpolator()
+        scrollNextAnimal.addUpdateListener {
+            scrollView.smoothScrollTo(
+                (startX + it.animatedFraction * distanceX).toInt(),
+                i
+            );
+        }
+        scrollNextAnimal.addListener(onEnd = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                playingAnimal.pause()
+            }
+            headPosition += (datas[datasCurrentIndex].gaps * gap)
+            _isNext.value = true
+            datasCurrentIndex++
+            currentPlayPosition = 0f
+            scrollNextAnimal.cancel()
+        })
+        scrollNextAnimal.start()
+    }
+
+    private val scrollBackAnimal = ObjectAnimator.ofFloat(0f, 1000f)
+    private fun scroll2Back(startX: Int, distanceX: Int, i: Int) {
+        scrollBackAnimal.duration = 100
+        scrollBackAnimal.interpolator = DecelerateInterpolator()
+        scrollBackAnimal.addUpdateListener {
+            scrollView.smoothScrollTo((startX - it.animatedFraction * distanceX).toInt(), i)
+        }
+        scrollBackAnimal.start()
+
     }
 
 
@@ -273,59 +304,50 @@ class ScrollViewItem : androidx.appcompat.widget.AppCompatTextView, UpdateProgre
                     startX = event.x
                     isTouchDown = true
                 }
-                MotionEvent.ACTION_MOVE -> {
-//                    prohibitScrollLeft()
-                }
                 MotionEvent.ACTION_UP -> {
                     isScrollToNext(startX, event.x)
 
                 }
             }
-
             false
         }
 
         scrollView.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
-//            Log.e("scrolll", "$scrollX -- $scrollY --- $oldScrollX ---$oldScrollY")
+            Log.e("scrollView", "$scrollX--$scrollY--$oldScrollX---$oldScrollY")
             prohibitScrollLeft()
         }
     }
 
     private fun prohibitScrollLeft() {
-        if (scrollView.scrollX < headPosition) {
+        if (scrollView.scrollX - 10 < headPosition) {
             scrollView.smoothScrollTo(headPosition.toInt(), 0)
             true
         }
     }
 
     private fun isScrollToNext(startX: Float, x: Float): Boolean {
-
         val surplusLength = headPosition + datas[datasCurrentIndex].gaps * gap - scrollView.scrollX
         if ((startX - x) > surplusLength / 2) {
             post {
-                headPosition += datas[datasCurrentIndex].gaps * gap
-                datasCurrentIndex++
-                scrollView.smoothScrollTo(
-                    headPosition.toInt(),
+                scroll2Next(
+                    scrollView.scrollX,
+                    (headPosition+datas[datasCurrentIndex].gaps * gap - scrollView.scrollX).toInt(),
                     0
                 )
             }
         } else {
             post {
-                scrollView.smoothScrollTo(headPosition.toInt(), 0)
-                isTouchDown = false
+                scroll2Back(
+                    scrollView.scrollX,
+                    (scrollView.scrollX - currentPlayPosition).toInt(),
+                    0
+                )
             }
 
         }
+        isTouchDown = false
         return false
     }
 
-//    private fun initNextData() {
-//        datas.removeAt(0)
-//        nextPlay()
-//        isTouchDown = false
-//        currentPlayFirstPositon = (datas[0].gaps * gap).toInt()
-//        currentPlayPosition = 0
-//    }
 
 }

@@ -61,7 +61,7 @@ class PodcastProgressBar : RelativeLayout, UpdateProgressBarInterface {
         headCircular = PpbHeadCircularView(context)
         val lp = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         headCircular.layoutParams = lp
-        addView(headCircular)
+//        addView(headCircular)
     }
 
     private fun addScrollView() {

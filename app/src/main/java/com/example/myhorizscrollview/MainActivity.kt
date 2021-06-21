@@ -15,12 +15,19 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
     var i = -1
+    var isPlaying = false
+    var preTimer = 0
+    var time = 0
     val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
-            Log.e("shijina", "${msg.obj.toString().toInt()}")
-            if (msg.arg1 == i) {
+
+            time = msg.obj.toString().toInt()
+
+            if (isPlaying && msg.arg1 == i && time - preTimer == 1000) {
+                Log.e("aaa", "${msg.obj.toString().toInt()}")
                 ppb.updateTime(msg.obj.toString().toInt())
+                preTimer = time
             }
 
         }
@@ -38,9 +45,11 @@ class MainActivity : AppCompatActivity() {
         ppb.update(list)
         ppb.isNext.observe(this, Observer {
             if (it) {
-                Log.e("aaa", "xiassss==nex")
+               isPlaying = false
+                preTimer = 0
+                Log.e("aaa","xiayiqu")
             }
-            isNext = it
+
         })
         findViewById<Button>(R.id.add).setOnClickListener {
             list.addAll(intiData())
@@ -49,13 +58,13 @@ class MainActivity : AppCompatActivity() {
 
 
         findViewById<Button>(R.id.play).setOnClickListener {
-
+            isPlaying = true
             i++
             timer = Timer()
             timer.schedule(object : TimerTask() {
                 var totalTime = 0
                 override fun run() {
-                    if (totalTime < list[i].time*1000) {
+                    if (totalTime < list[i].time * 1000) {
                         totalTime += 1000
                         val message = Message.obtain()
                         message.obj = totalTime
@@ -71,6 +80,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.next).setOnClickListener {
             ppb.updateNext()
             i++
+            isPlaying = false
+            preTimer = 0
         }
     }
 
